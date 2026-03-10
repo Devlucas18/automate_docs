@@ -1,7 +1,11 @@
 import os
-from docxtpl import DocxTemplate
+import io
+from PIL import Image
+from docxtpl import DocxTemplate, InlineImage
+from docx.shared import Mm
+from service.imagem import imagem
 
-# Sobe um nível (de /service/ para a raiz do projeto)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -27,21 +31,31 @@ class GeradorTermo:
 
     def gerar_doc(self):
         arquivo_template = self.TEMPLATES[self.tipo]
-        print(f"Procurando template em: {arquivo_template}")
-        print(f"Arquivo existe? {os.path.exists(arquivo_template)}")
 
         if not os.path.exists(arquivo_template):
             raise FileNotFoundError(f"Template não encontrado: {arquivo_template}")
 
         doc = DocxTemplate(arquivo_template)
 
-        img_path = self.dados.get("img")
+        dados_render = self.dados.copy()
 
 
-        if img_path and os.path.exists(img_path):
-            doc.replace_pic("image1.png", img_path)
+        image_path = dados_render.get("img") 
+        print(f"Processando imagem: {image_path}")
+        img = imagem(Image.open(image_path))
+        print(f"Redimensionando e comprimindo a imagem...{img.image.size}")
+        image_stream = img.process()
+        print(f"Imagem processada, tamanho final: {len(image_stream)} bytes")
 
-        doc.render(self.dados)
+        if image_stream and isinstance(image_stream, (bytes, io.BytesIO)):
+            if isinstance(image_stream, bytes):
+                image_stream = io.BytesIO(image_stream) 
+            dados_render["img"] = InlineImage(doc, image_stream, width=Mm(80))
+
+
+
+
+        doc.render(dados_render)
 
         nome = self.dados.get("nome", "SemNome").replace(" ", "_")
-        doc.save(f"Termo_{self.tipo}_{nome}.docx")
+        doc.save(f"gerados\\Termo_{self.tipo}_{nome}.docx")
