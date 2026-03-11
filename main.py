@@ -15,3 +15,4 @@ DADOS = {
 
 gerador = GeradorTermo(DADOS)
 gerador.gerar_doc()
+
