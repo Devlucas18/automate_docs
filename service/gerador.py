@@ -39,14 +39,10 @@ class GeradorTermo:
 
         dados_render = self.dados.copy()
 
-
+        # Processar a imagem
         image_path = dados_render.get("img") 
-        print(f"Processando imagem: {image_path}")
         img = imagem(Image.open(image_path))
-        print(f"Redimensionando e comprimindo a imagem...{img.image.size}")
         image_stream = img.process()
-        print(f"Imagem processada, tamanho final: {len(image_stream)} bytes")
-
         if image_stream and isinstance(image_stream, (bytes, io.BytesIO)):
             if isinstance(image_stream, bytes):
                 image_stream = io.BytesIO(image_stream) 
