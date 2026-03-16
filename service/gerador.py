@@ -1,5 +1,6 @@
 import os
 import io
+from pydoc import doc
 from PIL import Image
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
@@ -40,12 +41,10 @@ class GeradorTermo:
         dados_render = self.dados.copy()
 
         # Processar a imagem
-        image_path = dados_render.get("img") 
-        img = imagem(Image.open(image_path))
-        image_stream = img.process()
-        if image_stream and isinstance(image_stream, (bytes, io.BytesIO)):
-            if isinstance(image_stream, bytes):
-                image_stream = io.BytesIO(image_stream) 
+        image_path = dados_render.get("img")
+        if image_path:
+            img = imagem(Image.open(image_path))
+            image_stream = io.BytesIO(img.process())
             dados_render["img"] = InlineImage(doc, image_stream, width=Mm(80))
 
 
