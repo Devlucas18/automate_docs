@@ -41,11 +41,12 @@ class GeradorTermo:
         dados_render = self.dados.copy()
 
         # Processar a imagem
-        image_path = dados_render.get("img")
-        if image_path:
-            img = imagem(Image.open(image_path))
-            image_stream = io.BytesIO(img.process())
+        image_bytes = dados_render.get("img")
+        if image_bytes:
+            image_stream = io.BytesIO(image_bytes)
             dados_render["img"] = InlineImage(doc, image_stream, width=Mm(80))
+        else:
+            dados_render["img"] = ""
 
 
 

@@ -1,12 +1,13 @@
 import customtkinter as ctk
 from service.gerador import GeradorTermo
+from service.imagepastefield import ImagePasteField
 
 CAMPOS_POR_TIPO = {
-    "Notebook Recebimento":       ["Cargo", "Observação", "Marca", "Modelo", "Configuração", "Etiqueta", "Patrimônio", "Serial Number"],
+    "Notebook Recebimento":       ["Cargo", "Observação", "Marca", "Modelo", "Configuração", "Etiqueta", "Patrimônio", "Serial Number", "imagem"],
     "Notebook Devolução":         ["Modelo", "Configuração", "Etiqueta", "Serial", "Observação", "Recebido Por"],
-    "Celular Recebimento":        ["Cargo", "Observação", "Modelo Celular", "Serial", "IMEI", "Etiqueta"],
+    "Celular Recebimento":        ["Cargo", "Observação", "Modelo Celular", "Serial", "IMEI", "Etiqueta", "imagem"],
     "Celular Devolução":          ["Modelo", "Serial", "Recebido Por"],
-    "Celular + Chip Recebimento": ["Cargo", "Observação", "Modelo", "IMEI", "Serial", "Etiqueta", "Linha", "ICCID", "Pacote de Dados"],
+    "Celular + Chip Recebimento": ["Cargo", "Observação", "Modelo", "IMEI", "Serial", "Etiqueta", "Linha", "ICCID", "Pacote de Dados", "imagem"],
     "Chip Recebimento":           ["Serial Chip", "Linha", "Pacote de Dados"],
     "Tablet Devolução":           ["Modelo", "Etiqueta", "Serial", "Recebido Por"],
 }
@@ -18,9 +19,12 @@ class Interface:
         self.root.geometry("500x500")
         ctk.set_appearance_mode("dark")
 
-        self.entries = {}  # guarda referências dos entries dinâmicos
+        self.entries = {} 
 
         ctk.CTkLabel(self.root, text="Gerador de Termos", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 10))
+        ctk.CTk
+    
+        self.imagem_bytes: bytes | None = None
 
         # FRAME_NOME
         frame_nome = ctk.CTkFrame(self.root, fg_color="transparent")
@@ -51,33 +55,39 @@ class Interface:
         self.combobox_tipo = ctk.CTkComboBox(
             self.root,
             values=list(CAMPOS_POR_TIPO.keys()),
-            command=self.atualizar_frames   # chama ao mudar
+            command=self.atualizar_frames   
         )
         self.combobox_tipo.pack(pady=(0, 10))
 
-        # FRAME DINÂMICO (container que será limpo e refeito)
         self.frame_dinamico = ctk.CTkScrollableFrame(self.root, fg_color="transparent", height=200)
         self.frame_dinamico.pack(pady=(0, 10), fill="x", padx=20)
 
         # BOTÃO
         botao_gerar = ctk.CTkButton(self.root, text="Gerar Termo", corner_radius=10, command=self.gerar)
         botao_gerar.pack(pady=(0, 10))
-
-        # Gera os campos do valor inicial do combobox
+        
         self.atualizar_frames(self.combobox_tipo.get())
 
         self.root.mainloop()
+    def receber_imagem(self, dados: bytes):
+        self.imagem_bytes = dados
 
     def atualizar_frames(self, tipo):
-        # Destroi todos os widgets filhos do frame dinâmico
+
         for widget in self.frame_dinamico.winfo_children():
             widget.destroy()
 
-        self.entries = {}  # limpa referências antigas
+        self.entries = {}  
 
         campos = CAMPOS_POR_TIPO.get(tipo, [])
 
         for campo in campos:
+            if campo.lower() == "imagem":  # ← cobre "imagem", "Imagem", "imgem" não
+                image_field = ImagePasteField(self.frame_dinamico, on_image_ready=self.receber_imagem)
+                image_field.pack(padx=40, pady=10)
+                ctk.CTkButton(self.frame_dinamico, text="Limpar Imagem", command=image_field.limpar).pack()
+                continue
+
             frame = ctk.CTkFrame(self.frame_dinamico, fg_color="transparent")
             frame.pack(pady=(0, 8))
 
@@ -95,13 +105,14 @@ class Interface:
             "mês": self.mes.get(),
             "ano": self.ano.get(),
             "tipo_de_termo": self.combobox_tipo.get(),
+            "imagem": self.imagem_bytes
         }
         for campo, entry in self.entries.items():
-            dados[campo] = entry.get()  # chama o gerador de termo com os dados coletados
+            dados[campo] = entry.get()  
 
         print(dados)
         gerador = GeradorTermo(dados)
-        gerador.gerar_doc() # substitua pela lógica de geração do termo
+        gerador.gerar_doc() 
 
 
 if __name__ == "__main__":
